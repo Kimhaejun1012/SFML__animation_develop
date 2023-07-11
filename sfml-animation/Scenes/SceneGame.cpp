@@ -4,14 +4,18 @@
 #include "InputMgr.h"
 #include "ResourceMgr.h"
 #include "GameObject.h"
-
+#include "Player.h"
+#include "Framework.h"
 SceneGame::SceneGame() : Scene(SceneId::Game)
 {
+	resources.push_back(std::make_tuple(ResourceTypes::Texture, "graphics/sprite_sheet.png"));
 }
 
 void SceneGame::Init()
 {
 	Release();
+
+	Player* player = (Player*)AddGo(new Player());
 
 	for (auto go : gameObjects)
 	{
@@ -30,6 +34,11 @@ void SceneGame::Release()
 
 void SceneGame::Enter()
 {
+
+	auto size = FRAMEWORK.GetWindowSize();
+	worldView.setSize(size);
+	worldView.setCenter({ 0, 0 });
+
 	Scene::Enter();
 }
 
