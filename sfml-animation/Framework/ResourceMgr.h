@@ -12,7 +12,7 @@ protected:
 	std::map<std::string, sf::Texture*> mapTexture;
 	std::map<std::string, sf::Font*> mapFont;
 	std::map<std::string, sf::SoundBuffer*> mapSoundBuffer;
-
+	std::map<std::string, AnimationClip*> mapAnimationClip;
 public:
 
 	void UnLoadAll();
@@ -27,7 +27,7 @@ public:
 	sf::Texture* GetTexture(const std::string& id);
 	sf::Font* GetFont(const std::string& id);
 	sf::SoundBuffer* GetSoundBuffer(const std::string& id);
-
+	AnimationClip* GetAnimationClip(const std::string& id);
 };
 
 #define RESOURCE_MGR (ResourceMgr::Instance())

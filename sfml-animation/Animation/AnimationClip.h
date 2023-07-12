@@ -20,4 +20,6 @@ struct AnimationClip
 	std::vector<AnimationFrame> frames;
 	AnimationLoopTypes loopType;
 	int fps;
+
+	bool LoadFromFile(const std::string path);
 };

@@ -2,73 +2,33 @@
 #include "Player.h"
 #include "InputMgr.h"
 #include "Framework.h"
-
+#include "ResourceMgr.h"
 
 void Player::Init()
 {
-	std::string textureId = "graphics/sprite_sheet.png";
+	RESOURCE_MGR.Load(ResourceTypes::AnimationClip, "tables/Idle.csv");
+	RESOURCE_MGR.Load(ResourceTypes::AnimationClip, "tables/Move.csv");
+	RESOURCE_MGR.Load(ResourceTypes::AnimationClip, "tables/Up.csv");
+	RESOURCE_MGR.Load(ResourceTypes::AnimationClip, "tables/Down.csv");
 
-	// Idle
-	{
-		AnimationClip clip;
-		clip.id = "Idle";
-		clip.fps = 10;
-		clip.loopType = AnimationLoopTypes::Loop;
 
-		sf::IntRect coord(0, 0, 120, 120);
-		for (int i = 0; i < 8; ++i)
-		{
-			clip.frames.push_back({ textureId, coord });
-			coord.left += coord.width;
-		}
 
-		animation.AddClip(clip);
-	}
-
-	// Move
-	{
-		AnimationClip clip;
-		clip.id = "Move";
-		clip.fps = 10;
-		clip.loopType = AnimationLoopTypes::Loop;
-
-		sf::IntRect coord(0, 120, 120, 120);
-		for (int i = 0; i < 8; ++i)
-		{
-			clip.frames.push_back({ textureId, coord });
-			coord.left += coord.width;
-		}
-		clip.frames.push_back({ textureId, sf::IntRect(0, 240, 120, 120) });
-		animation.AddClip(clip);
-	}
-
-	// Jump
-	{
-		AnimationClip clip;
-		clip.id = "Jump";
-		clip.fps = 10;
-		clip.loopType = AnimationLoopTypes::Single;
-
-		sf::IntRect coord(0, 360, 120, 120);
-		for (int i = 0; i < 7; ++i)
-		{
-			clip.frames.push_back({ textureId, coord });
-			coord.left += coord.width;
-		}
-
-		//clip.frames[6].action = []() {
-		//	std::cout << "On Complete Jump Clip" << std::endl;
-		//};
-
-		animation.AddClip(clip);
-	}
+	animation.AddClip(*RESOURCE_MGR.GetAnimationClip("tables/Idle.csv"));
+	animation.AddClip(*RESOURCE_MGR.GetAnimationClip("tables/Move.csv"));
+	animation.AddClip(*RESOURCE_MGR.GetAnimationClip("tables/Up.csv"));
+	animation.AddClip(*RESOURCE_MGR.GetAnimationClip("tables/Down.csv"));
 
 	animation.SetTarget(&sprite);
-	floor.setFillColor(sf::Color::Red);
-	floor.setSize(sf::Vector2f(1920, 500));
-	floor.setPosition(sf::Vector2f(0, 120.f));
-	Utils::SetOrigin(floor, Origins::TC);
-	SetOrigin(Origins::TC);
+
+	SetOrigin(Origins::BC);
+
+
+	floor.setFillColor(sf::Color::Green);
+	floor.setPosition({ 0,0 });
+	floor.setOutlineColor(sf::Color::Magenta);
+	floor.setOutlineThickness(100);
+	Utils::SetOrigin(floor, Origins::BC);
+	floor.setSize(sf::Vector2f{ 500, 500 });
 }
 
 void Player::Reset()
@@ -81,13 +41,18 @@ void Player::Reset()
 
 void Player::Update(float dt)
 {
+	isWPressed = INPUT_MGR.GetKey(sf::Keyboard::W);
+	isAPressed = INPUT_MGR.GetKey(sf::Keyboard::A);
+	isSPressed = INPUT_MGR.GetKey(sf::Keyboard::S);
+	isDPressed = INPUT_MGR.GetKey(sf::Keyboard::D);
+
 	animation.Update(dt);
 	float h = INPUT_MGR.GetAxis(Axis::Horizontal);
-
+	float w = INPUT_MGR.GetAxis(Axis::Vertical);
 	// 플립
 	if (h != 0.f)
 	{
-		bool flip = h < 0.f;
+		bool flip = h > 0.f;
 		if (GetFlipX() != flip)
 		{
 			SetFlipX(flip);
@@ -95,55 +60,82 @@ void Player::Update(float dt)
 	}
 
 	// 점프
-	if (isGround && INPUT_MGR.GetKeyDown(sf::Keyboard::Space))
-	{
-		velocity.y += JumpForce;
-		animation.Play("Jump");
-		isGround = false;
-	}
 
 	// 이동
 	velocity.x = h * speed;
-	velocity.y += gravity * dt;
+	velocity.y = w * speed;
 	position += velocity * dt;
 
 	// 바닥 충돌 처리
-	if (position.y > 0.f)
-	{
-		isGround = true;
-		position.y = 0.f;
-		velocity.y = 0.f;
-	}
+	//if (position.y > 0.f)
+	//{
+	//	isGround = true;
+	//	position.y = 0.f;
+	//	velocity.y = 0.f;
+	//}
+
+
+	//대각 이상함 
 
 	SetPosition(position);
 
 	// 에니메이션
-	if (animation.GetCurrentClipId() == "Idle")
+	if (animation.GetCurrentClipId() == "Idle" || animation.GetCurrentClipId() == "Up" || animation.GetCurrentClipId() == "Down" )
 	{
-		if (isGround && h != 0.f)
+		if (h != 0.f)
 		{
 			animation.Play("Move");
 		}
 	}
 	else if (animation.GetCurrentClipId() == "Move")
 	{
-		if (isGround && h == 0.f)
+		if (h == 0.f)
 		{
 			animation.Play("Idle");
 		}
 	}
-	else if (animation.GetCurrentClipId() == "Jump")
+
+	if ((animation.GetCurrentClipId() == "Idle" || animation.GetCurrentClipId() == "Down" || animation.GetCurrentClipId() == "Move") && h==0)
 	{
-		if (isGround)
+		//animation.GetCurrentClipId() = "Up";
+		if (w < 0.f)
 		{
-			animation.Play((h == 0.f) ? "Idle" : "Move");
+			animation.Play("Up");
 		}
 	}
+	else if (animation.GetCurrentClipId() == "Up")
+	{
+		if (w == 0.f)
+		{
+			animation.Play("Idle");
+		}
+	}
+	if ((animation.GetCurrentClipId() == "Idle" || animation.GetCurrentClipId() == "Up" || animation.GetCurrentClipId() == "Move")&& h == 0)
+	{
+		if (w > 0.f)
+		{
+			animation.Play("Down");
+		}
+	}
+	else if (animation.GetCurrentClipId() == "Down")
+	{
+		if (w == 0.f)
+		{
+			animation.Play("Idle");
+		}
+	}
+
+
 }
 
 bool Player::GetFlipX() const
 {
 	return filpX;
+}
+
+bool Player::GetFlipY() const
+{
+	return filpY;
 }
 
 void Player::SetFlipX(bool filp)
@@ -155,8 +147,17 @@ void Player::SetFlipX(bool filp)
 	sprite.setScale(scale);
 }
 
+void Player::SetFlipY(bool filp)
+{
+	filpY = filp;
+
+	sf::Vector2f scale = sprite.getScale();
+	scale.x = !filpY ? abs(scale.y) : -abs(scale.y);
+	sprite.setScale(scale);
+}
+
 void Player::Draw(sf::RenderWindow& window)
 {
-	SpriteGo::Draw(window);
 	window.draw(floor);
+	SpriteGo::Draw(window);
 }

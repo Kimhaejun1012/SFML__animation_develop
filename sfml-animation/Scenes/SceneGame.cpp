@@ -6,9 +6,11 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "Framework.h"
+
+
 SceneGame::SceneGame() : Scene(SceneId::Game)
 {
-	resources.push_back(std::make_tuple(ResourceTypes::Texture, "graphics/sprite_sheet.png"));
+	resources.push_back(std::make_tuple(ResourceTypes::Texture, "graphics/RubySheet.png"));
 }
 
 void SceneGame::Init()
